@@ -8,17 +8,174 @@ by Joshua Bloch
 
 #### Item 1: Consider static factories instead of constructors
 * An instance-controlled class is one that uses static factories to strictly control what instances exist at any time.
+
+##### Pros
++ Have names unlike constructors
++ Not required to return a new object when invoked.
++ Can return any subtype as return type
+  + Factory
++ Fourth advantage is that reduce verbosity of creating parameterized type instances
+
+##### Cons
++ How to differentiate them from already existing static methods
++ Classes without public/private constructors cannot be subclassed.
+
+
 * By convention, static factory methods for an interface named `Type` are put in a non-instantiable class named `Types`.
 * When naming static factory methods, `getInstance` may return the same instance, while `newInstance` should not.
 
 #### Item 2: Consider a builder when faced with many constructor parameters
 * The builder pattern simulates optional named parameters in Ada and Python.
 * A builder whose parameters have been set makes a fine abstract factory, assuming some generic `Builder<T>` interface.
+```java
+public class Meal {
+  private final Food food;
+  private final Fruit fruit;
+  private final Drink drink;
+
+  public Meal(Food food) {
+
+  }
+
+  public Meal(Food food, Fruit fruit) {
+
+  }
+  //... and so on multiple constructors..
+}
+```
+
+The JavaBean Pattern - allows inconsistentcy. mandates mutability
+
+Builder Pattern
+
+```java
+public class Meal {
+
+ public static class Builder {
+   // required parameters
+    private final Food food;
+    private final Drink drink;
+
+    //optional
+    private final Fruit fruit;
+    public Builder(Food food, Drink drink) {
+      this.food = food;
+      this.drink = drink;
+
+    }
+
+    public Builder withFruit(Fruit fruit) {
+      this.fruit = fruit;
+    }
+
+
+ }
+
+}
+```
 
 #### Item 3: Enforce the singleton property with a private constructor or an enum type
 * Adding `implements Serializable` to a singleton class is not enough, you must declare all fields `transient` and provide a `readResolve` method.
 * A single-element `enum` type provides the serialization for free and is the best way to implement a singleton.
 
+Attempt 1 - Wrong
+
+```java
+public class ClassicSingleton {
+   private static ClassicSingleton instance = null;
+   protected ClassicSingleton() {
+      // Exists only to defeat instantiation.
+   }
+   //... fails in multi-threaded environment
+   public static ClassicSingleton getInstance() {
+      if(instance == null) {
+         instance = new ClassicSingleton();
+      }
+      return instance;
+   }
+}
+
+```
+
+Syncronized Singleton
+
+``` java
+public synchronized static Singleton getInstance() {
+   if(singleton == null) {
+      // simulateRandomActivity();
+      singleton = new Singleton();
+   }
+   logger.info("created singleton: " + singleton);
+   return singleton;
+}
+```
+
+Double Check Singleton
+``` java
+public static Singleton getInstance() {
+   if(singleton == null) {
+     synchronized(Singleton.class) {
+       if (singleton==null)
+        singleton = new Singleton();
+
+     }
+   }
+
+  //  logger.info("created singleton: " + singleton);
+   return singleton;
+}
+
+```
+
+Private constructor and static instance
+```java
+public class Singleton {
+   public final static Singleton INSTANCE = new Singleton();
+   private Singleton() {
+         // Exists only to defeat instantiation.
+      }
+}
+```
+
+Serializable
+```java
+
+public class Singleton implements java.io.Serializable {
+   public static Singleton INSTANCE = new Singleton();
+   protected Singleton() {
+      // Exists only to thwart instantiation.
+   }
+   /// override this else it will cause deserialzation to get two Singletonss...
+      private Object readResolve() {
+            return INSTANCE;
+      }
+}
+```
+Best Way
+``` java
+public enum Singleton {
+  INSTANCE;
+}
+
+```
+
+
+public class Elvis {
+  public static final Elvis INSTANCE = new Elvis();
+  public void leaveTheBuilding() {
+
+  }
+  //private constructor
+}
+
+```
+
+``` java
+//Singleton with static factory
+public class Elvis {
+
+}
+```
 #### Item 4: Enforce non-instantiability with a private constructor
 * A private constructor not only supresses instantiation, but subclassing.
 
@@ -289,4 +446,3 @@ by Joshua Bloch
 * Inside a `synchronized` region, do not invoke a method that is provided by the client as a function object, or can be overriden.
 * Reentrant locks simplify the construction of multi-threaded object oriented programs, but can allow foreign methods to access an object in an inconsistent state.
 * Only make a mutable class thread-safe if intended for concurrent use and you can achieve better concurrency with internal locking; otherwise, punt locking to the client.
-
