@@ -416,21 +416,50 @@ Hashfun
 * Like the `equals` method, there is no way to extend and instantiable class with a new value component while preserving the `compareTo` contract.
 * If `compareTo` is consistent with `equals`, note that sorted collections (e.g. `TreeSet`, `TreeMap`) use the equality test imposed by `compareTo` instead of `equals` and may break the interface (e.g. `Set`, `Map`) contract.
 + e.g. BigDecimal class
-+ Big Difference between compareTo vs equals is that compareTo is parameterized whereas equals is not. 
++ Big Difference between compareTo vs equals is that compareTo is parameterized whereas equals is not.
+  + You don't need to type check it.
+
 * Use methods `Double.compare` and `Float.compare` instead of relational operators, which don't obey the `compareTo` contract for floating point values.
 
 ### Chapter 4: Classes and Interfaces
 
 #### Item 13: Minimize the accessibility of classes and members
++ encapsulation: - information hiding
+  + Modules communicate each other via APIs - their implementation should be hidden from each other
+  + Isolation + Testing
+
++ Access Levels
+  private - member is accessible from the top-level class only
+  package-private: default, members are accessible from packages only
+  protected: sub-classes + packages
+  public : anywhere
+
+
 * Private and package-private members can "leak" into the exported API if the class implements Serializable.
 * Even a protected member is part of the class's exported API and must be supported forever.
-* With the exception of `public static final` fields to immutable objects, public classes should have no public fields.
+* With the exception of `public static final` fields to immutable objects, public classes should have no public fields - not thread safe. Can cause havoc.
+
++ Non-Zero array is mutable
+``` java
+//this is mutable.
+public static final Things[] VALUES = {...};
+```
+
+To provide an array back make it private and return a copy in accessors.
 
 #### Item 14: In public classes, use accessor methods, not public fields
 * If a class is package-private or a private nested class, there's nothing wrong with exposing its data.
 * A public class with immutable public fields is okay because it can enforce their invariants upon construction.
 
+
+
 #### Item 15: Minimize mutability
+* To make object immutable
+  + make the class final - don't allow inheritence
+  + allow fields final & private
+  + don't allow direct mutation of the elements.
+    + if there are mutation operations create a new object and return it.
+
 * For immutable classes, the Java memory model requires that all fields be `final` to ensure correct behavior when passing an instance between threads without synchronization.
 * Defend against "leaking" references by making defensive copies in constructors, accessors, and `readResolve` methods when needed.
 * Instances of an immutable class can share internal objects with one another for efficiency.
@@ -438,6 +467,29 @@ Hashfun
 
 #### Item 16: Favor composition over inheritance
 * Inheritance violates encapsulation because the subclass depends on the implementation details of the superclass for its proper function.
+  + Each subclass depends on superclass for it function properly.
+  + If the code in superclass breaks, it breaks subclass even if the subclass itself didn't change at all.
+e.g.
+``` java
+class CountingHashSet<T> extends HashSet<T> {
+  private int counter = 0 ;
+
+  @Override public boolean add(T e){
+    counter++;
+    return super.add(e);
+  }
+
+
+    @Override public boolean addAll(T e){
+      counter++;
+      return super.add(e);
+    }
+}
+```
+
+addAll in ```CountingHashSet``` would call addAll in ```HashSet``` which in turn will call add on the object i.e. ```CountingHashSet.add```.  
+The key point being inheriting classes need to know about the superclass. 
+
 * Inheritance means you inherit the scope and flaws of an API, whereas composition allows you to design a better suited one.
 * If an appropriate interface exists, using composition and forwarding allows you to instrument any implementation of the interface, instead of a single implementation through inheritance.
 
