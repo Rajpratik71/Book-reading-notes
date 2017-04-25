@@ -151,7 +151,7 @@ public class Singleton implements java.io.Serializable {
       }
 }
 ```
-Best Way
+Best Way - Can enum be serialized?
 ``` java
 public enum Singleton {
   INSTANCE;
@@ -160,17 +160,81 @@ public enum Singleton {
 ```
 
 #### Item 4: Enforce non-instantiability with a private constructor
+```java
+public class UtilityClass {
+  private UtilityClass () {
+    throw new AssertionError();
+  }
+}
+```
+
 * A private constructor not only supresses instantiation, but subclassing.
 
 #### Item 5: Avoid creating unnecessary objects
 * Often lazy initialization only complicates the implementation and yields no noticeable performance increase.
+
+Don't do this. It creates an extra object "hello"
+```java
+String s = new String("hello"); // don't do this ..
+```
+
+Use static initializer to create Calendar/Timezone
+
+```java
+class Person {
+
+  public boolean isBabyBoomer() {
+    Calendar gmtCal = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
+    gmt.set(1965, Calendar.JANUARY, 1, 0 ,0 );
+    //do date time comparison .
+  }
+}
+
+```
+better to use static initializer
+``` java
+class Person {
+  static {
+      Calendar gmtCal = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
+      gmt.set(1965, Calendar.JANUARY, 1, 0 ,0 );
+  }
+}
+```
 * Prefer primitives to boxed primitives, as unintentional autoboxing can lead to creating many new instances.
+
+e.g. This creates a Long object everytime.
+
+``` java
+Long sum = 0L;
+for (long i = 0; i < Integer.MAX_VALUE; ++i) {
+  sum+=i;
+}
+
+```
+
+
 * Highly optimized garbage collectors can easily outperform object pools that do not contain heavyweight objects.
+
++ Exceptions maybe in case of DB Connections
 
 #### Item 6: Eliminate obsolete object references
 * Whenever a class manages its own memory, like a stack or object pool, the programmer should be alert for memory leaks.
-* Caches, listeners, and callbacks can all be sources of memory leaks, but weak references can help.
 
++ Memory Leak in stack example
+```java
+public Object pop() {
+  if (size==0)
+    throw new EmptyStackException();
+  Object result = elements[--size];
+  //the elements array still has a reference to the result element.
+  // add this line to indicate to GC to collect the element here ...
+elements[size] = null;
+
+  return result;
+}
+* Caches, listeners, and callbacks can all be sources of memory leaks, but weak references can help.
++ Clean up caches.
++ Unregister listeners.
 #### Item 7: Avoid finalizers
 * Do not think of finalizers as Java's analogue of C++ destructors -- there's no guarantee finalizers will be called at all!
 * If an uncaught exception is thrown in a finalizer, it is ignored, and the finalization abruptly terminates.
