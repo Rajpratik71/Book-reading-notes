@@ -397,7 +397,9 @@ Don't do this
     return 42;
   }
   ```
-
+Hashfun
+  + produce unequal hashcodes for unequal numbers.
+  +
 * To take the hash code of `float` and `double` values, use `Float.floatToIntBits` and `Double.doubleToLongBits`, respectively.
 
 * Immutability offers the chance to cache hash codes if computing them is expensive.
@@ -407,9 +409,14 @@ Don't do this
 * If you specify the format in Javadoc, provide a static factory method accepting a `String` parameter so a client can convert between the two forms.
 * Provide programmatic information to all the information provided by `toString`, or clients may try to parse the string to retrieve it.
 
+#### Item 11: Cloneable ? what does that do..
+
+
 #### Item 12: Consider implementing `Comparable`
 * Like the `equals` method, there is no way to extend and instantiable class with a new value component while preserving the `compareTo` contract.
 * If `compareTo` is consistent with `equals`, note that sorted collections (e.g. `TreeSet`, `TreeMap`) use the equality test imposed by `compareTo` instead of `equals` and may break the interface (e.g. `Set`, `Map`) contract.
++ e.g. BigDecimal class
++ Big Difference between compareTo vs equals is that compareTo is parameterized whereas equals is not. 
 * Use methods `Double.compare` and `Float.compare` instead of relational operators, which don't obey the `compareTo` contract for floating point values.
 
 ### Chapter 4: Classes and Interfaces
