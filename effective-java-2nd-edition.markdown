@@ -232,9 +232,11 @@ elements[size] = null;
 
   return result;
 }
+```
 * Caches, listeners, and callbacks can all be sources of memory leaks, but weak references can help.
 + Clean up caches.
 + Unregister listeners.
+
 #### Item 7: Avoid finalizers
 * Do not think of finalizers as Java's analogue of C++ destructors -- there's no guarantee finalizers will be called at all!
 * If an uncaught exception is thrown in a finalizer, it is ignored, and the finalization abruptly terminates.
