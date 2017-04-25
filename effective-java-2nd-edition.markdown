@@ -388,7 +388,18 @@ coll.contains(cis); // indeterminate answer..
 * For best performance, first compare fields that are more likely to differ, or less expensive to compare.
 
 #### Item 9: Always override `hashCode` when you override `equals`
+  + Otherwise you cannot use your class properly in the HashMap, HashSet and Hashtable.
+  + equal objects should have equal hashcodes
+  +
+Don't do this
+  ```java
+   @ Override public int hashCode() {
+    return 42;
+  }
+  ```
+
 * To take the hash code of `float` and `double` values, use `Float.floatToIntBits` and `Double.doubleToLongBits`, respectively.
+
 * Immutability offers the chance to cache hash codes if computing them is expensive.
 * Try not to specify the behavior of your hash code method in Javadoc, as that limits your options for improving it later.
 
