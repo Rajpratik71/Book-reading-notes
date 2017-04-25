@@ -159,23 +159,6 @@ public enum Singleton {
 
 ```
 
-
-public class Elvis {
-  public static final Elvis INSTANCE = new Elvis();
-  public void leaveTheBuilding() {
-
-  }
-  //private constructor
-}
-
-```
-
-``` java
-//Singleton with static factory
-public class Elvis {
-
-}
-```
 #### Item 4: Enforce non-instantiability with a private constructor
 * A private constructor not only supresses instantiation, but subclassing.
 
