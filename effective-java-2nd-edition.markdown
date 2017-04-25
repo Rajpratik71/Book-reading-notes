@@ -233,6 +233,7 @@ elements[size] = null;
   return result;
 }
 ```
+
 * Caches, listeners, and callbacks can all be sources of memory leaks, but weak references can help.
 + Clean up caches.
 + Unregister listeners.
@@ -242,12 +243,146 @@ elements[size] = null;
 * If an uncaught exception is thrown in a finalizer, it is ignored, and the finalization abruptly terminates.
 * There is a severe performance penalty for using finalizers -- object creation and deletion increases from nanoseconds to microseconds.
 
++ Where to use them if at all - TODO
 ### Chapter 3: Methods Common to All Objects
 
 #### Item 8: Obey the general contract when overriding `equals`
 * Override `equals` when a class has a notion of logical equality that differs from mere object identity, and the superclass has not provided a suitable implementation.
 * For classes that represent a value, such as `Integer` or `Date`, the `equals` method should always be overridden.
 * There is no way to extend an instantiable class and add a value component (field) while preserving the `equals` contract.
+* The class is private or package-private, and you are certain `equals` method will never be invoked. You should still override equals and return an exceptions
+``` java
+@Override public boolean equals(Object o) {
+  throw new AssertionError();
+}
+```
+
+#### General Contract for equals()
++ Reflexive x.equals(x)
++ Symmetric x.equals(y) ==> y.equals(x)
+Breaks symmetry...
+``` java
+
+class CaseInsentiveString {
+  private final String s;
+
+  public CaseInsentiveString(String s) {
+    this.s = s;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o instanceof CaseInsentiveString) {
+      return s.equalsIgnoreCase(((CaseInsentiveString)o).s);
+    }
+    if (o instanceof String) {
+      return s.equalsIgnoreCase((String)o);
+    }
+  }
+
+}
+```
+
+Now
+``` java
+CaseInsentiveString cis = new CaseInsentiveString(polish);
+String s = "polish";
+cis.equals(s)// returns true;
+s.equals(cis)// returns false;
+```
+Further if you had
+``` java
+List<CaseInsentiveString> coll = new ArrayList<>();
+coll.contains(cis); // indeterminate answer..
+```
+##### equals() symmetry is important
+
++ Transitive x.equals(y), y.equals(z) ==> z.equals(x)
+  + Also favor composition to inheritence - Why ?
+    + There is literally no way to extend a class and adding a value type without violating the equals contract.
+``` java
+  // class Point
+  class Point {
+    private final x;
+    private final y;
+
+    public Point(int x, int y){
+      this.x = x;
+      this.y = y;
+    }
+
+    @Override public boolean equals(Object o){
+      if (!(o instanceof Point)) return false;
+      Point p = (Point)o;
+      return (this.x==p.x && this.y==p.y);
+    }
+  }
+
+ // Color Point
+
+ class ColorPoint extends Point {
+   private final Color color;
+
+   public boolean equals(Object o) {
+     if (!(o instanceof ColorPoint)) return false;
+      return false;
+
+    return super.equals(o) && ((ColorPoint)o).color == color;
+
+   }
+   // the equals method above breaks symmetry cause
+
+   // Point p1 = new Point(1, 2);
+   // ColorPoint p2 = new ColorPoint(1,2, Color.red);
+   // p1.equals(p2) ==> true
+   // p2.equals(p1) ==> false
+
+   // One possible solution for Point type do color blind comparison
+   public boolean equals(Object o) {
+     if (!(o instanceof Point)) return false;
+
+     if (!(o instanceof ColorPoint)) {
+       //Point type delegate to points equals method...
+       return o.equals(this);
+     }
+    // o is a ColorPoint; do a full comparison.  
+    return super.equals(o) && ((ColorPoint)o).color == color;
+
+   }
+
+   // However this violates the transistivity principle
+
+   // Point p1 = new Point(1, 2);
+   // ColorPoint p2 = new ColorPoint(1,2, Color.red);
+   // ColorPoint p3 = new ColorPoint(1,2, Color.red);
+   // p1.equals(p2) ==> true
+   // p1.equals(p3) ==> true
+   // p2.equals(p3) ==> false;
+
+   //Its better do it to using composition
+   public class ColorPoint {
+     private final Point point ;
+     private final Color color;
+
+
+     @Override public boolean equals(Object o) {
+       if (!(o instanceof ColorPoint)) {
+         return false;
+       }
+       ColorPoint cp = (ColorPoint) o;
+       return cp.point.equals(point) && cp.color.equals(color);
+     }
+   }
+
+ }
+```
+
+
++ consistent x.equals(y) ==> should return same values
++ x.equals(null) = > false when x is not  null;
+
+
+
 * By using composition with views to internal components, you can add value components to instantiable classes without violating the `equals` contract.
 * To compare `float` and `double` values, use the `Float.compare` and `Double.compare` methods to deal with `NaN` and `-0.0` values.
 * For best performance, first compare fields that are more likely to differ, or less expensive to compare.
