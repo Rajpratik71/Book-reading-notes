@@ -8,46 +8,400 @@ by Joshua Bloch
 
 #### Item 1: Consider static factories instead of constructors
 * An instance-controlled class is one that uses static factories to strictly control what instances exist at any time.
+
+##### Pros
++ Have names unlike constructors
++ Not required to return a new object when invoked.
++ Can return any subtype as return type
+  + Factory
++ Fourth advantage is that reduce verbosity of creating parameterized type instances
+
+##### Cons
++ How to differentiate them from already existing static methods
++ Classes without public/private constructors cannot be subclassed.
+
+
 * By convention, static factory methods for an interface named `Type` are put in a non-instantiable class named `Types`.
 * When naming static factory methods, `getInstance` may return the same instance, while `newInstance` should not.
 
 #### Item 2: Consider a builder when faced with many constructor parameters
 * The builder pattern simulates optional named parameters in Ada and Python.
 * A builder whose parameters have been set makes a fine abstract factory, assuming some generic `Builder<T>` interface.
+```java
+public class Meal {
+  private final Food food;
+  private final Fruit fruit;
+  private final Drink drink;
+
+  public Meal(Food food) {
+
+  }
+
+  public Meal(Food food, Fruit fruit) {
+
+  }
+  //... and so on multiple constructors..
+}
+```
+
+The JavaBean Pattern - allows inconsistentcy. mandates mutability
+
+Builder Pattern
+
+```java
+public class Meal {
+
+ public static class Builder {
+   // required parameters
+    private final Food food;
+    private final Drink drink;
+
+    //optional
+    private final Fruit fruit;
+    public Builder(Food food, Drink drink) {
+      this.food = food;
+      this.drink = drink;
+
+    }
+
+    public Builder withFruit(Fruit fruit) {
+      this.fruit = fruit;
+    }
+
+
+ }
+
+}
+```
 
 #### Item 3: Enforce the singleton property with a private constructor or an enum type
 * Adding `implements Serializable` to a singleton class is not enough, you must declare all fields `transient` and provide a `readResolve` method.
 * A single-element `enum` type provides the serialization for free and is the best way to implement a singleton.
 
+Attempt 1 - Wrong
+
+```java
+public class ClassicSingleton {
+   private static ClassicSingleton instance = null;
+   protected ClassicSingleton() {
+      // Exists only to defeat instantiation.
+   }
+   //... fails in multi-threaded environment
+   public static ClassicSingleton getInstance() {
+      if(instance == null) {
+         instance = new ClassicSingleton();
+      }
+      return instance;
+   }
+}
+
+```
+
+Syncronized Singleton
+
+``` java
+public synchronized static Singleton getInstance() {
+   if(singleton == null) {
+      // simulateRandomActivity();
+      singleton = new Singleton();
+   }
+   logger.info("created singleton: " + singleton);
+   return singleton;
+}
+```
+
+Double Check Singleton
+``` java
+public static Singleton getInstance() {
+   if(singleton == null) {
+     synchronized(Singleton.class) {
+       if (singleton==null)
+        singleton = new Singleton();
+
+     }
+   }
+
+  //  logger.info("created singleton: " + singleton);
+   return singleton;
+}
+
+```
+
+Private constructor and static instance
+```java
+public class Singleton {
+   public final static Singleton INSTANCE = new Singleton();
+   private Singleton() {
+         // Exists only to defeat instantiation.
+      }
+}
+```
+
+Serializable
+```java
+
+public class Singleton implements java.io.Serializable {
+   public static Singleton INSTANCE = new Singleton();
+   protected Singleton() {
+      // Exists only to thwart instantiation.
+   }
+   /// override this else it will cause deserialzation to get two Singletonss...
+      private Object readResolve() {
+            return INSTANCE;
+      }
+}
+```
+Best Way - Can enum be serialized?
+``` java
+public enum Singleton {
+  INSTANCE;
+}
+
+```
+
 #### Item 4: Enforce non-instantiability with a private constructor
+```java
+public class UtilityClass {
+  private UtilityClass () {
+    throw new AssertionError();
+  }
+}
+```
+
 * A private constructor not only supresses instantiation, but subclassing.
 
 #### Item 5: Avoid creating unnecessary objects
 * Often lazy initialization only complicates the implementation and yields no noticeable performance increase.
+
+Don't do this. It creates an extra object "hello"
+```java
+String s = new String("hello"); // don't do this ..
+```
+
+Use static initializer to create Calendar/Timezone
+
+```java
+class Person {
+
+  public boolean isBabyBoomer() {
+    Calendar gmtCal = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
+    gmt.set(1965, Calendar.JANUARY, 1, 0 ,0 );
+    //do date time comparison .
+  }
+}
+
+```
+better to use static initializer
+``` java
+class Person {
+  static {
+      Calendar gmtCal = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
+      gmt.set(1965, Calendar.JANUARY, 1, 0 ,0 );
+  }
+}
+```
 * Prefer primitives to boxed primitives, as unintentional autoboxing can lead to creating many new instances.
+
+e.g. This creates a Long object everytime.
+
+``` java
+Long sum = 0L;
+for (long i = 0; i < Integer.MAX_VALUE; ++i) {
+  sum+=i;
+}
+
+```
+
+
 * Highly optimized garbage collectors can easily outperform object pools that do not contain heavyweight objects.
+
++ Exceptions maybe in case of DB Connections
 
 #### Item 6: Eliminate obsolete object references
 * Whenever a class manages its own memory, like a stack or object pool, the programmer should be alert for memory leaks.
+
++ Memory Leak in stack example
+```java
+public Object pop() {
+  if (size==0)
+    throw new EmptyStackException();
+  Object result = elements[--size];
+  //the elements array still has a reference to the result element.
+  // add this line to indicate to GC to collect the element here ...
+elements[size] = null;
+
+  return result;
+}
+```
+
 * Caches, listeners, and callbacks can all be sources of memory leaks, but weak references can help.
++ Clean up caches.
++ Unregister listeners.
 
 #### Item 7: Avoid finalizers
 * Do not think of finalizers as Java's analogue of C++ destructors -- there's no guarantee finalizers will be called at all!
 * If an uncaught exception is thrown in a finalizer, it is ignored, and the finalization abruptly terminates.
 * There is a severe performance penalty for using finalizers -- object creation and deletion increases from nanoseconds to microseconds.
 
++ Where to use them if at all - TODO
 ### Chapter 3: Methods Common to All Objects
 
 #### Item 8: Obey the general contract when overriding `equals`
 * Override `equals` when a class has a notion of logical equality that differs from mere object identity, and the superclass has not provided a suitable implementation.
 * For classes that represent a value, such as `Integer` or `Date`, the `equals` method should always be overridden.
 * There is no way to extend an instantiable class and add a value component (field) while preserving the `equals` contract.
+* The class is private or package-private, and you are certain `equals` method will never be invoked. You should still override equals and return an exceptions
+``` java
+@Override public boolean equals(Object o) {
+  throw new AssertionError();
+}
+```
+
+#### General Contract for equals()
++ Reflexive x.equals(x)
++ Symmetric x.equals(y) ==> y.equals(x)
+Breaks symmetry...
+``` java
+
+class CaseInsentiveString {
+  private final String s;
+
+  public CaseInsentiveString(String s) {
+    this.s = s;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o instanceof CaseInsentiveString) {
+      return s.equalsIgnoreCase(((CaseInsentiveString)o).s);
+    }
+    if (o instanceof String) {
+      return s.equalsIgnoreCase((String)o);
+    }
+  }
+
+}
+```
+
+Now
+``` java
+CaseInsentiveString cis = new CaseInsentiveString(polish);
+String s = "polish";
+cis.equals(s)// returns true;
+s.equals(cis)// returns false;
+```
+Further if you had
+``` java
+List<CaseInsentiveString> coll = new ArrayList<>();
+coll.contains(cis); // indeterminate answer..
+```
+##### equals() symmetry is important
+
++ Transitive x.equals(y), y.equals(z) ==> z.equals(x)
+  + Also favor composition to inheritence - Why ?
+    + There is literally no way to extend a class and adding a value type without violating the equals contract.
+``` java
+  // class Point
+  class Point {
+    private final x;
+    private final y;
+
+    public Point(int x, int y){
+      this.x = x;
+      this.y = y;
+    }
+
+    @Override public boolean equals(Object o){
+      if (!(o instanceof Point)) return false;
+      Point p = (Point)o;
+      return (this.x==p.x && this.y==p.y);
+    }
+  }
+
+ // Color Point
+
+ class ColorPoint extends Point {
+   private final Color color;
+
+   public boolean equals(Object o) {
+     if (!(o instanceof ColorPoint)) return false;
+      return false;
+
+    return super.equals(o) && ((ColorPoint)o).color == color;
+
+   }
+   // the equals method above breaks symmetry cause
+
+   // Point p1 = new Point(1, 2);
+   // ColorPoint p2 = new ColorPoint(1,2, Color.red);
+   // p1.equals(p2) ==> true
+   // p2.equals(p1) ==> false
+
+   // One possible solution for Point type do color blind comparison
+   public boolean equals(Object o) {
+     if (!(o instanceof Point)) return false;
+
+     if (!(o instanceof ColorPoint)) {
+       //Point type delegate to points equals method...
+       return o.equals(this);
+     }
+    // o is a ColorPoint; do a full comparison.  
+    return super.equals(o) && ((ColorPoint)o).color == color;
+
+   }
+
+   // However this violates the transistivity principle
+
+   // Point p1 = new Point(1, 2);
+   // ColorPoint p2 = new ColorPoint(1,2, Color.red);
+   // ColorPoint p3 = new ColorPoint(1,2, Color.red);
+   // p1.equals(p2) ==> true
+   // p1.equals(p3) ==> true
+   // p2.equals(p3) ==> false;
+
+   //Its better do it to using composition
+   public class ColorPoint {
+     private final Point point ;
+     private final Color color;
+
+
+     @Override public boolean equals(Object o) {
+       if (!(o instanceof ColorPoint)) {
+         return false;
+       }
+       ColorPoint cp = (ColorPoint) o;
+       return cp.point.equals(point) && cp.color.equals(color);
+     }
+   }
+
+ }
+```
+
+
++ consistent x.equals(y) ==> should return same values
++ x.equals(null) = > false when x is not  null;
+
+
+
 * By using composition with views to internal components, you can add value components to instantiable classes without violating the `equals` contract.
 * To compare `float` and `double` values, use the `Float.compare` and `Double.compare` methods to deal with `NaN` and `-0.0` values.
 * For best performance, first compare fields that are more likely to differ, or less expensive to compare.
 
 #### Item 9: Always override `hashCode` when you override `equals`
+  + Otherwise you cannot use your class properly in the HashMap, HashSet and Hashtable.
+  + equal objects should have equal hashcodes
+  +
+Don't do this
+  ```java
+   @ Override public int hashCode() {
+    return 42;
+  }
+  ```
+Hashfun
+  + produce unequal hashcodes for unequal numbers.
+  +
 * To take the hash code of `float` and `double` values, use `Float.floatToIntBits` and `Double.doubleToLongBits`, respectively.
+
 * Immutability offers the chance to cache hash codes if computing them is expensive.
 * Try not to specify the behavior of your hash code method in Javadoc, as that limits your options for improving it later.
 
@@ -55,23 +409,57 @@ by Joshua Bloch
 * If you specify the format in Javadoc, provide a static factory method accepting a `String` parameter so a client can convert between the two forms.
 * Provide programmatic information to all the information provided by `toString`, or clients may try to parse the string to retrieve it.
 
+#### Item 11: Cloneable ? what does that do..
+
+
 #### Item 12: Consider implementing `Comparable`
 * Like the `equals` method, there is no way to extend and instantiable class with a new value component while preserving the `compareTo` contract.
 * If `compareTo` is consistent with `equals`, note that sorted collections (e.g. `TreeSet`, `TreeMap`) use the equality test imposed by `compareTo` instead of `equals` and may break the interface (e.g. `Set`, `Map`) contract.
++ e.g. BigDecimal class
++ Big Difference between compareTo vs equals is that compareTo is parameterized whereas equals is not.
+  + You don't need to type check it.
+
 * Use methods `Double.compare` and `Float.compare` instead of relational operators, which don't obey the `compareTo` contract for floating point values.
 
 ### Chapter 4: Classes and Interfaces
 
 #### Item 13: Minimize the accessibility of classes and members
++ encapsulation: - information hiding
+  + Modules communicate each other via APIs - their implementation should be hidden from each other
+  + Isolation + Testing
+
++ Access Levels
+  private - member is accessible from the top-level class only
+  package-private: default, members are accessible from packages only
+  protected: sub-classes + packages
+  public : anywhere
+
+
 * Private and package-private members can "leak" into the exported API if the class implements Serializable.
 * Even a protected member is part of the class's exported API and must be supported forever.
-* With the exception of `public static final` fields to immutable objects, public classes should have no public fields.
+* With the exception of `public static final` fields to immutable objects, public classes should have no public fields - not thread safe. Can cause havoc.
+
++ Non-Zero array is mutable
+``` java
+//this is mutable.
+public static final Things[] VALUES = {...};
+```
+
+To provide an array back make it private and return a copy in accessors.
 
 #### Item 14: In public classes, use accessor methods, not public fields
 * If a class is package-private or a private nested class, there's nothing wrong with exposing its data.
 * A public class with immutable public fields is okay because it can enforce their invariants upon construction.
 
+
+
 #### Item 15: Minimize mutability
+* To make object immutable
+  + make the class final - don't allow inheritence
+  + allow fields final & private
+  + don't allow direct mutation of the elements.
+    + if there are mutation operations create a new object and return it.
+
 * For immutable classes, the Java memory model requires that all fields be `final` to ensure correct behavior when passing an instance between threads without synchronization.
 * Defend against "leaking" references by making defensive copies in constructors, accessors, and `readResolve` methods when needed.
 * Instances of an immutable class can share internal objects with one another for efficiency.
@@ -79,6 +467,29 @@ by Joshua Bloch
 
 #### Item 16: Favor composition over inheritance
 * Inheritance violates encapsulation because the subclass depends on the implementation details of the superclass for its proper function.
+  + Each subclass depends on superclass for it function properly.
+  + If the code in superclass breaks, it breaks subclass even if the subclass itself didn't change at all.
+e.g.
+``` java
+class CountingHashSet<T> extends HashSet<T> {
+  private int counter = 0 ;
+
+  @Override public boolean add(T e){
+    counter++;
+    return super.add(e);
+  }
+
+
+    @Override public boolean addAll(T e){
+      counter++;
+      return super.add(e);
+    }
+}
+```
+
+addAll in ```CountingHashSet``` would call addAll in ```HashSet``` which in turn will call add on the object i.e. ```CountingHashSet.add```.  
+The key point being inheriting classes need to know about the superclass. 
+
 * Inheritance means you inherit the scope and flaws of an API, whereas composition allows you to design a better suited one.
 * If an appropriate interface exists, using composition and forwarding allows you to instrument any implementation of the interface, instead of a single implementation through inheritance.
 
@@ -289,4 +700,3 @@ by Joshua Bloch
 * Inside a `synchronized` region, do not invoke a method that is provided by the client as a function object, or can be overriden.
 * Reentrant locks simplify the construction of multi-threaded object oriented programs, but can allow foreign methods to access an object in an inconsistent state.
 * Only make a mutable class thread-safe if intended for concurrent use and you can achieve better concurrency with internal locking; otherwise, punt locking to the client.
-
