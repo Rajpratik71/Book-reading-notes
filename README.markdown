@@ -11,3 +11,8 @@ Quick description of how we take notes:
 > No highlights or any fancy exporting. Sorry if that's anti-climactic.
 > 
 > For physical books, we have the text editor open on a laptop, and then the physical book betwixt. But the algorithm is very similar 😛
+
+Contents
+--
+
+ * [Advance DOM Scripting](./advanced-dom-scripting.markdown) 
