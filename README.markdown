@@ -1,9 +1,13 @@
-Notes from books and other interesting things that I've read. Enjoy!
+Notes from books and other interesting things we've read. Enjoy!
 
-Quick description of how I take notes:
+Quick description of how we take notes:
 
-> On my Macbook, I have the Kindle app open with the book, as well as the markdown file open in a text editor (usually Sublime Text or MacVim, but it doesn't matter). When I read something that I want to summarize, I mentally commit it to memory and Command-Tab over to the text editor and type it out in Markdown. I don't copy-and-paste, because I find this solution allows me to retain the information better, and also it allows me to restructure the sentence if needed (usually editing for length). Usually my memory is not good enough and I Command-Tab back and forth, re-reading it in the Kindle app, and then re-reading what I typed out.
+> On a MacBook, we use either the [Calibre](https://sigil-ebook.com/) ebook manager, [Sigil](https://sigil-ebook.com/) or a physical book at a desk, as well as the markdown file open in a text editor (usually [Atom](atom.io) or [Xray](https://github.com/atom/xray)(**note:** Xray is experimental software) it doesn't matter).
+>
+> When we read something that we want to summarize, we mentally commit it to memory and Command-Tab over to the text editor and type it out in Markdown. Don't copy-and-paste, because this solution allows for better retention of the information and allows for resrtucturing of the passage of interest (usually editing for length).
+>
+> Human memory is generally not good enough and it's necessay to Command-Tab back and forth, re-reading it in the app, and then re-reading your typing.
 > 
 > No highlights or any fancy exporting. Sorry if that's anti-climactic.
 > 
-> For some of the older notes, I had the text editor open on my laptop, and then the physical book between me and my Macbook. But the algorithm was very similar 😛
+> For physical books, we have the text editor open on a laptop, and then the physical book betwixt. But the algorithm is very similar 😛
