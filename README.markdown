@@ -15,4 +15,6 @@ Quick description of how we take notes:
 Contents
 --
 
- * [Advance DOM Scripting](./advanced-dom-scripting.markdown) 
+ * [Advance DOM Scripting](./advanced-dom-scripting.markdown)
+ * [Adversaries into allies](./adversaries-into-allies.markdown)
+ * [Ape: Author, Publisher, Entrepreneur. How to Publish a Book](./ape-author-publisher-entrepreneur.markdown)
